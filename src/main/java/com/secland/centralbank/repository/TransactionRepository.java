@@ -1,6 +1,8 @@
 package com.secland.centralbank.repository;
 
 import com.secland.centralbank.model.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
  * </p>
  */
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    
+
     /**
      * Finds all transactions where the specified account ID is either the source or destination.
      * <p>
@@ -30,4 +32,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @return List of transactions involving the specified account
      */
     List<Transaction> findBySourceAccountIdOrDestinationAccountId(Long sourceAccountId, Long destinationAccountId);
+
+    /**
+     * Finds transactions with pagination where the specified account ID is either the source or destination.
+     *
+     * @param sourceAccountId the account ID to search for as source account
+     * @param destinationAccountId the account ID to search for as destination account
+     * @param pageable pagination and sorting parameters
+     * @return Page of transactions involving the specified account
+     */
+    Page<Transaction> findBySourceAccountIdOrDestinationAccountId(
+            Long sourceAccountId, Long destinationAccountId, Pageable pageable);
 }

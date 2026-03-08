@@ -3,6 +3,7 @@ package com.secland.centralbank;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
  * Main entry point for the BancoCentral–SecLand application.
@@ -16,6 +17,7 @@ import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 @SpringBootApplication(
 		exclude = FlywayAutoConfiguration.class
 )
+@EnableJpaAuditing
 public class BancoCentralSecLandApplication {
 
 	/**

@@ -1,6 +1,9 @@
 package com.secland.centralbank.dto;
 
+import com.secland.centralbank.model.TransactionStatus;
+import com.secland.centralbank.model.TransactionType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,61 +22,62 @@ import java.time.LocalDateTime;
  * =====================================================================
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransactionHistoryDto {
-    
+
     /**
      * Unique transaction identifier
      */
     private Long id;
-    
+
     /**
      * Transaction type (TRANSFER, DEPOSIT, WITHDRAWAL, etc.)
      */
-    private String transactionType;
-    
+    private TransactionType transactionType;
+
     /**
      * Transaction amount
      */
     private BigDecimal amount;
-    
+
     /**
      * Source account number (for outgoing transactions)
      */
     private String fromAccountNumber;
-    
+
     /**
      * Destination account number (for incoming transactions)
      */
     private String toAccountNumber;
-    
+
     /**
      * Transaction description or memo
      */
     private String description;
-    
+
     /**
      * Transaction timestamp
      */
     private LocalDateTime transactionDate;
-    
+
     /**
      * Transaction status (COMPLETED, PENDING, FAILED, etc.)
      */
-    private String status;
-    
+    private TransactionStatus status;
+
     /**
      * Account balance after this transaction
      */
     private BigDecimal balanceAfter;
-    
+
     /**
      * Indicates if this is an incoming or outgoing transaction
      * from the perspective of the requesting user
      */
     private String direction; // "IN" or "OUT"
-    
+
     /**
      * The other party in the transaction (for display purposes)
      */

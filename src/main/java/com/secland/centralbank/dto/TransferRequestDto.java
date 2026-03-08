@@ -1,8 +1,14 @@
 package com.secland.centralbank.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -13,6 +19,9 @@ import java.math.BigDecimal;
  * </p>
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransferRequestDto {
 
     /**
@@ -41,7 +50,8 @@ public class TransferRequestDto {
      * </p>
      */
     @NotNull(message = "Amount is required")
-    @Min(value = 1, message = "Amount must be at least 1")
+    @DecimalMin(value = "0.01", message = "Amount must be at least 0.01")
+    @Digits(integer = 15, fraction = 2, message = "Amount must have at most 15 integer digits and 2 decimal places")
     private BigDecimal amount;
 
     /**
@@ -50,5 +60,6 @@ public class TransferRequestDto {
      * Can be used to specify a note, reference, or purpose for the transfer.
      * </p>
      */
+    @Size(max = 255, message = "Description must not exceed 255 characters")
     private String description;
 }

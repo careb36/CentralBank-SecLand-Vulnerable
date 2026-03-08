@@ -2,7 +2,7 @@ package com.secland.centralbank.service;
 
 import com.secland.centralbank.model.User;
 import com.secland.centralbank.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,10 +15,10 @@ import java.util.ArrayList;
  * Spring Security's UserDetails.
  */
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     /**
      * Loads a user by their username for Spring Security.

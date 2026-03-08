@@ -1,8 +1,11 @@
 package com.secland.centralbank.service;
 
 import com.secland.centralbank.dto.TransactionHistoryDto;
+import com.secland.centralbank.dto.TransactionResponseDto;
 import com.secland.centralbank.dto.TransferRequestDto;
 import com.secland.centralbank.model.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -15,9 +18,9 @@ public interface TransactionService {
      * Performs a money transfer between two accounts.
      *
      * @param transferRequestDto DTO containing the details of the transfer.
-     * @return The resulting Transaction record.
+     * @return The resulting TransactionResponseDto record.
      */
-    Transaction performTransfer(TransferRequestDto transferRequestDto);
+    TransactionResponseDto performTransfer(TransferRequestDto transferRequestDto);
 
     /**
      * Retrieves transaction history for a specific account.
@@ -31,6 +34,15 @@ public interface TransactionService {
      * @return List of TransactionHistoryDto containing transaction details
      */
     List<TransactionHistoryDto> getTransactionHistory(Long accountId);
+
+    /**
+     * Retrieves paginated transaction history for a specific account.
+     *
+     * @param accountId the ID of the account to retrieve transactions for
+     * @param pageable pagination and sorting parameters
+     * @return Page of TransactionHistoryDto containing transaction details
+     */
+    Page<TransactionHistoryDto> getTransactionHistory(Long accountId, Pageable pageable);
 
     /**
      * Searches for transactions by description using a vulnerable SQL query.

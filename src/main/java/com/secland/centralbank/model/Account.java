@@ -1,7 +1,12 @@
 package com.secland.centralbank.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,7 +25,11 @@ import java.time.LocalDateTime;
  * </ul>
  * </p>
  */
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"user"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "accounts")
 public class Account {
@@ -28,6 +37,7 @@ public class Account {
     /**
      * Primary key for the account entity, auto-incremented by the database.
      */
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -61,12 +71,10 @@ public class Account {
 
     /**
      * Timestamp indicating when the account was created.
-     * <p>
-     * Initialized to the current time by default.
-     * </p>
      */
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     /**
      * Reference to the user who owns this account.

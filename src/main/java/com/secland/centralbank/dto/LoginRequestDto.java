@@ -1,7 +1,11 @@
 package com.secland.centralbank.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Data transfer object representing the payload for user login requests.
@@ -10,6 +14,9 @@ import lombok.Data;
  * </p>
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginRequestDto {
 
     /**
@@ -19,6 +26,7 @@ public class LoginRequestDto {
      * </p>
      */
     @NotBlank(message = "Username must not be blank")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
 
     /**
@@ -28,5 +36,6 @@ public class LoginRequestDto {
      * </p>
      */
     @NotBlank(message = "Password must not be blank")
+    @Size(min = 1, max = 100, message = "Password must be between 1 and 100 characters")
     private String password;
 }

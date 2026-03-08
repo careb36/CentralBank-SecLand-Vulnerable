@@ -1,17 +1,25 @@
 package com.secland.centralbank.controller;
 
 import com.secland.centralbank.dto.TransactionHistoryDto;
+import com.secland.centralbank.dto.TransactionResponseDto;
 import com.secland.centralbank.dto.TransferRequestDto;
-import com.secland.centralbank.model.Transaction;
 import com.secland.centralbank.service.TransactionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * REST controller exposing endpoints for account-related operations.
+ * REST controller exposing endpoints for transaction-related operations.
+ * <p>
+ * <strong>Note:</strong> The {@code @RequestMapping("/api/accounts")} path is kept for backwards compatibility
+ * with existing API consumers, even though this controller now handles transactions.
+ * </p>
  * <p>
  * <strong>Security Notice:</strong> This controller intentionally contains an Insecure Direct Object Reference (IDOR)
  * vulnerability in the transferMoney endpoint for educational and demonstration purposes.
@@ -23,16 +31,10 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/accounts")
-public class AccountController {
+@RequiredArgsConstructor
+public class TransactionController {
 
-    /**
-     * Service for performing transactions.
-     * <p>
-     * Constructor injection is generally preferred over field injection for better testability and immutability.
-     * </p>
-     */
-    @Autowired
-    private TransactionService transactionService;
+    private final TransactionService transactionService;
 
     /**
      * Executes a money transfer between two user accounts.
@@ -47,17 +49,11 @@ public class AccountController {
      *         {@code 400 Bad Request} if an error occurs (e.g., account not found or business rule violation)
      */
     @PostMapping("/transfer")
-    public ResponseEntity<Transaction> transferMoney(
+    public ResponseEntity<TransactionResponseDto> transferMoney(
             @RequestBody TransferRequestDto transferRequestDto) {
 
-        try {
-            // Perform the transfer; service may throw RuntimeException for validation failures
-            Transaction transaction = transactionService.performTransfer(transferRequestDto);
-            return ResponseEntity.ok(transaction);
-        } catch (RuntimeException e) {
-            // Return a clear 400 response on errors such as "Account not found" or business rule violations
-            return ResponseEntity.badRequest().build();
-        }
+        TransactionResponseDto transaction = transactionService.performTransfer(transferRequestDto);
+        return ResponseEntity.ok(transaction);
     }
 
     /**
@@ -80,13 +76,19 @@ public class AccountController {
     @GetMapping("/{accountId}/transactions")
     public ResponseEntity<List<TransactionHistoryDto>> getTransactionHistory(
             @PathVariable Long accountId) {
-        
-        try {
-            // VULNERABILITY: No authorization check - any user can access any account's transactions
-            List<TransactionHistoryDto> transactions = transactionService.getTransactionHistory(accountId);
-            return ResponseEntity.ok(transactions);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+
+        // VULNERABILITY: No authorization check - any user can access any account's transactions
+        List<TransactionHistoryDto> transactions = transactionService.getTransactionHistory(accountId);
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("/{accountId}/transactions/paged")
+    public ResponseEntity<Page<TransactionHistoryDto>> getTransactionHistoryPaged(
+            @PathVariable Long accountId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("transactionDate").descending());
+        Page<TransactionHistoryDto> history = transactionService.getTransactionHistory(accountId, pageable);
+        return ResponseEntity.ok(history);
     }
 }

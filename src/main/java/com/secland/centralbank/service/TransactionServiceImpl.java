@@ -1,12 +1,20 @@
 package com.secland.centralbank.service;
 
 import com.secland.centralbank.dto.TransactionHistoryDto;
+import com.secland.centralbank.dto.TransactionResponseDto;
 import com.secland.centralbank.dto.TransferRequestDto;
+import com.secland.centralbank.exception.InsufficientFundsException;
+import com.secland.centralbank.exception.ResourceNotFoundException;
+import com.secland.centralbank.mapper.TransactionMapper;
 import com.secland.centralbank.model.Account;
 import com.secland.centralbank.model.Transaction;
+import com.secland.centralbank.model.TransactionStatus;
+import com.secland.centralbank.model.TransactionType;
 import com.secland.centralbank.repository.AccountRepository;
 import com.secland.centralbank.repository.TransactionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +29,16 @@ import java.util.stream.Collectors;
  * This class contains deliberate vulnerabilities for ethical hacking purposes.
  */
 @Service
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    @Autowired
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+
+    private final TransactionMapper transactionMapper;
 
     /**
      * Performs a funds transfer from a source account to a destination account.
@@ -48,12 +56,12 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Override
     @Transactional
-    public Transaction performTransfer(TransferRequestDto transferRequestDto) {
+    public TransactionResponseDto performTransfer(TransferRequestDto transferRequestDto) {
         Account sourceAccount = accountRepository.findById(transferRequestDto.getSourceAccountId())
-                .orElseThrow(() -> new RuntimeException("Source account not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account", "id", transferRequestDto.getSourceAccountId()));
 
         Account destinationAccount = accountRepository.findById(transferRequestDto.getDestinationAccountId())
-                .orElseThrow(() -> new RuntimeException("Destination account not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account", "id", transferRequestDto.getDestinationAccountId()));
 
         BigDecimal amount = transferRequestDto.getAmount();
 
@@ -61,17 +69,28 @@ public class TransactionServiceImpl implements TransactionService {
         sourceAccount.setBalance(sourceAccount.getBalance().subtract(amount));
         destinationAccount.setBalance(destinationAccount.getBalance().add(amount));
 
-        accountRepository.save(sourceAccount);
-        accountRepository.save(destinationAccount);
+        // Balances updated via JPA dirty checking within @Transactional
 
         // Record the transaction
         Transaction transaction = new Transaction();
-        transaction.setSourceAccountId(sourceAccount.getId());
-        transaction.setDestinationAccountId(destinationAccount.getId());
+        transaction.setSourceAccount(sourceAccount);
+        transaction.setDestinationAccount(destinationAccount);
         transaction.setAmount(amount);
         transaction.setDescription(transferRequestDto.getDescription());
+        transaction.setType(TransactionType.TRANSFER);
+        transaction.setStatus(TransactionStatus.COMPLETED);
 
-        return transactionRepository.save(transaction);
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        return TransactionResponseDto.builder()
+                .id(savedTransaction.getId())
+                .sourceAccountId(savedTransaction.getSourceAccountId())
+                .destinationAccountId(savedTransaction.getDestinationAccountId())
+                .amount(savedTransaction.getAmount())
+                .description(savedTransaction.getDescription())
+                .type(savedTransaction.getType())
+                .status(savedTransaction.getStatus())
+                .transactionDate(savedTransaction.getTransactionDate())
+                .build();
     }
 
     /**
@@ -86,6 +105,7 @@ public class TransactionServiceImpl implements TransactionService {
      * @return List of TransactionHistoryDto containing transaction details
      */
     @Override
+    @Transactional(readOnly = true)
     public List<TransactionHistoryDto> getTransactionHistory(Long accountId) {
         // VULNERABILITY: No authorization check - any user can access any account's transactions
         List<Transaction> transactions = transactionRepository.findBySourceAccountIdOrDestinationAccountId(
@@ -93,21 +113,20 @@ public class TransactionServiceImpl implements TransactionService {
 
         return transactions.stream()
                 .map(transaction -> {
-                    TransactionHistoryDto dto = new TransactionHistoryDto();
-                    dto.setId(transaction.getId());
-                    
+                    TransactionHistoryDto dto = transactionMapper.toHistoryDto(transaction);
+
                     // Get account numbers for display
                     Account sourceAccount = accountRepository.findById(transaction.getSourceAccountId()).orElse(null);
                     Account destinationAccount = accountRepository.findById(transaction.getDestinationAccountId()).orElse(null);
-                    
+
                     dto.setFromAccountNumber(sourceAccount != null ? sourceAccount.getAccountNumber() : "Unknown");
                     dto.setToAccountNumber(destinationAccount != null ? destinationAccount.getAccountNumber() : "Unknown");
                     dto.setAmount(transaction.getAmount());
                     // VULNERABILITY: Raw description returned without sanitization (Stored XSS)
                     dto.setDescription(transaction.getDescription());
                     dto.setTransactionDate(transaction.getTransactionDate());
-                    dto.setTransactionType("TRANSFER");
-                    dto.setStatus("COMPLETED");
+                    dto.setTransactionType(TransactionType.TRANSFER);
+                    dto.setStatus(TransactionStatus.COMPLETED);
                     dto.setDirection("OUT"); // Default direction
                     return dto;
                 })
@@ -126,6 +145,7 @@ public class TransactionServiceImpl implements TransactionService {
      * @return List of TransactionHistoryDto matching the search criteria
      */
     @Override
+    @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public List<TransactionHistoryDto> searchTransactionsByDescription(String description) {
         // VULNERABILITY: SQL Injection through string concatenation
@@ -140,25 +160,51 @@ public class TransactionServiceImpl implements TransactionService {
                 .map(row -> {
                     TransactionHistoryDto dto = new TransactionHistoryDto();
                     dto.setId(((Number) row[0]).longValue());
-                    
+
                     // Get account numbers for display
                     Long sourceAccountId = ((Number) row[1]).longValue();
                     Long destinationAccountId = ((Number) row[2]).longValue();
-                    
+
                     Account sourceAccount = accountRepository.findById(sourceAccountId).orElse(null);
                     Account destinationAccount = accountRepository.findById(destinationAccountId).orElse(null);
-                    
+
                     dto.setFromAccountNumber(sourceAccount != null ? sourceAccount.getAccountNumber() : "Unknown");
                     dto.setToAccountNumber(destinationAccount != null ? destinationAccount.getAccountNumber() : "Unknown");
                     dto.setAmount((BigDecimal) row[3]);
                     // VULNERABILITY: Raw description returned without sanitization (Stored XSS)
                     dto.setDescription((String) row[4]);
                     dto.setTransactionDate(((java.sql.Timestamp) row[5]).toLocalDateTime());
-                    dto.setTransactionType("TRANSFER");
-                    dto.setStatus("COMPLETED");
+                    dto.setTransactionType(TransactionType.TRANSFER);
+                    dto.setStatus(TransactionStatus.COMPLETED);
                     dto.setDirection("OUT"); // Default direction
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionHistoryDto> getTransactionHistory(Long accountId, Pageable pageable) {
+        Page<Transaction> transactions = transactionRepository
+                .findBySourceAccountIdOrDestinationAccountId(accountId, accountId, pageable);
+
+        return transactions.map(transaction -> {
+            TransactionHistoryDto dto = transactionMapper.toHistoryDto(transaction);
+            // Set calculated fields (same logic as the non-paginated version)
+            Account sourceAccount = accountRepository.findById(transaction.getSourceAccountId()).orElse(null);
+            Account destinationAccount = accountRepository.findById(transaction.getDestinationAccountId()).orElse(null);
+
+            if (sourceAccount != null) {
+                dto.setFromAccountNumber(sourceAccount.getAccountNumber());
+            }
+            if (destinationAccount != null) {
+                dto.setToAccountNumber(destinationAccount.getAccountNumber());
+            }
+
+            boolean isOutgoing = transaction.getSourceAccountId().equals(accountId);
+            dto.setDirection(isOutgoing ? "OUTGOING" : "INCOMING");
+
+            return dto;
+        });
     }
 }

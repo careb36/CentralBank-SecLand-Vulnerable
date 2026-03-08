@@ -1,7 +1,12 @@
 package com.secland.centralbank.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,60 +24,82 @@ import java.time.LocalDateTime;
  * </ul>
  * </p>
  */
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EntityListeners(AuditingEntityListener.class)
 @Entity
-@Table(name = "transactions")
+@Table(name = "transactions", indexes = {
+        @Index(name = "idx_txn_source", columnList = "source_account_id"),
+        @Index(name = "idx_txn_destination", columnList = "destination_account_id")
+})
 public class Transaction {
 
     /**
      * Primary key for the transaction entity, auto-incremented by the database.
      */
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
      * Identifier of the account from which funds are withdrawn.
-     * <p>
-     * Must reference a valid {@code Account} ID.
-     * </p>
      */
-    @Column(name = "source_account_id", nullable = false)
+    @Column(name = "source_account_id", nullable = false, insertable = false, updatable = false)
     private Long sourceAccountId;
 
     /**
      * Identifier of the account to which funds are deposited.
-     * <p>
-     * Must reference a valid {@code Account} ID.
-     * </p>
      */
-    @Column(name = "destination_account_id", nullable = false)
+    @Column(name = "destination_account_id", nullable = false, insertable = false, updatable = false)
     private Long destinationAccountId;
 
     /**
+     * JPA relationship to the source account.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_account_id", nullable = false)
+    private Account sourceAccount;
+
+    /**
+     * JPA relationship to the destination account.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_account_id", nullable = false)
+    private Account destinationAccount;
+
+    /**
      * Amount of money transferred in the transaction.
-     * <p>
-     * Uses {@link BigDecimal} for financial precision; precision and scale can be further configured if required.
-     * </p>
      */
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
     /**
      * Optional description or memo for the transaction.
-     * <p>
-     * Can be used to record a reason, note, or reference for the transfer.
-     * </p>
      */
     @Column(length = 255)
     private String description;
 
     /**
-     * Timestamp indicating when the transaction was created.
-     * <p>
-     * Initialized to the current date and time at entity instantiation.
-     * </p>
+     * Type of the transaction.
      */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TransactionType type;
+
+    /**
+     * Status of the transaction.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TransactionStatus status;
+
+    /**
+     * Timestamp indicating when the transaction was created.
+     */
+    @CreatedDate
     @Column(name = "transaction_date", nullable = false, updatable = false)
-    private LocalDateTime transactionDate = LocalDateTime.now();
+    private LocalDateTime transactionDate;
 }
