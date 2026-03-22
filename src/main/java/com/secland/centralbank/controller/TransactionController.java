@@ -4,6 +4,7 @@ import com.secland.centralbank.dto.TransactionHistoryDto;
 import com.secland.centralbank.dto.TransactionResponseDto;
 import com.secland.centralbank.dto.TransferRequestDto;
 import com.secland.centralbank.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,7 +51,7 @@ public class TransactionController {
      */
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponseDto> transferMoney(
-            @RequestBody TransferRequestDto transferRequestDto) {
+            @Valid @RequestBody TransferRequestDto transferRequestDto) {
 
         TransactionResponseDto transaction = transactionService.performTransfer(transferRequestDto);
         return ResponseEntity.ok(transaction);
@@ -90,5 +91,36 @@ public class TransactionController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("transactionDate").descending());
         Page<TransactionHistoryDto> history = transactionService.getTransactionHistory(accountId, pageable);
         return ResponseEntity.ok(history);
+    }
+
+    /**
+     * Searches transactions by description keyword.
+     * <p>
+     * <strong>Intentional Vulnerability (SQL Injection):</strong> The {@code description}
+     * query parameter is passed directly into a raw SQL query via string concatenation in
+     * {@link com.secland.centralbank.service.TransactionServiceImpl#searchTransactionsByDescription}.
+     * An attacker can inject arbitrary SQL to extract data from any table in the database.
+     * </p>
+     * <p>
+     * <strong>Example exploit:</strong>
+     * <pre>
+     * GET /api/accounts/search?description=test%25' UNION SELECT id,username,password,NULL,NULL,NULL FROM users--
+     * </pre>
+     * </p>
+     * <p>
+     * <strong>Intentional Vulnerability (IDOR):</strong> Results are not filtered by the
+     * authenticated user's accounts, so any authenticated user can discover transactions
+     * across the entire system.
+     * </p>
+     *
+     * @param description the keyword to search for in transaction descriptions
+     * @return list of matching {@link TransactionHistoryDto} records
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<TransactionHistoryDto>> searchTransactions(
+            @RequestParam String description) {
+        // VULNERABILITY: The description parameter flows into a raw SQL query without sanitization
+        List<TransactionHistoryDto> results = transactionService.searchTransactionsByDescription(description);
+        return ResponseEntity.ok(results);
     }
 }
