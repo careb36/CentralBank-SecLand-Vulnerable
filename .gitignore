@@ -1,10 +1,14 @@
 # --------------------------------------
 # Compiled output & build directories
 # --------------------------------------
-target/           # Maven default build output
-build/            # Gradle default build output
-out/              # IntelliJ non-Maven/Gradle output
-bin/              # Other build binaries
+# Maven default build output
+target/
+# Gradle default build output
+build/
+# IntelliJ non-Maven/Gradle output
+out/
+# Other build binaries
+bin/
 
 # --------------------------------------
 # Package & archive files
