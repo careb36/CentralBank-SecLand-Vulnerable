@@ -5,6 +5,7 @@ import com.secland.centralbank.dto.LoginResponseDto;
 import com.secland.centralbank.dto.RegisterUserDto;
 import com.secland.centralbank.dto.UserResponseDto;
 import com.secland.centralbank.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> register(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody RegisterUserDto registerUserDto) {
         UserResponseDto registeredUser = authService.register(registerUserDto);
         return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }

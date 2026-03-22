@@ -124,6 +124,11 @@ async function handleRegister(event) {
         showMessage('Password must be at least 8 characters long', 'error');
         return;
     }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        showMessage('Password must contain at least one uppercase letter, one lowercase letter, and one digit', 'error');
+        return;
+    }
     
     showLoading(true);
     
@@ -302,8 +307,8 @@ async function handleTransfer(event) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                fromAccountId: parseInt(fromAccountId),
-                toAccountNumber,
+                sourceAccountId: parseInt(fromAccountId),
+                destinationAccountId: parseInt(toAccountNumber),
                 amount,
                 description: description || 'Transfer'
             })

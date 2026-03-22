@@ -69,6 +69,7 @@
                                 <label for="regPassword">Password:</label>
                                 <input type="password" id="regPassword" name="password" required 
                                        placeholder="Choose a password" autocomplete="new-password">
+                                <small>Min 8 chars with at least one uppercase, one lowercase, and one digit.</small>
                             </div>
                             <div class="form-group">
                                 <label for="regFullName">Full Name:</label>
@@ -127,9 +128,9 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="toAccount">To Account Number:</label>
-                                    <input type="text" id="toAccount" name="toAccount" required 
-                                           placeholder="Enter destination account number">
+                                    <label for="toAccount">To Account ID:</label>
+                                    <input type="number" id="toAccount" name="toAccount" required 
+                                           placeholder="Enter destination account ID (e.g. 201)">
                                 </div>
                                 <div class="form-group">
                                     <label for="amount">Amount:</label>
