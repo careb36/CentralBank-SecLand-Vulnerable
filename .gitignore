@@ -1,50 +1,44 @@
 # --------------------------------------
 # Compiled output & build directories
 # --------------------------------------
-target/           # Maven default build output
-build/            # Gradle default build output
-out/              # IntelliJ non-Maven/Gradle output
-bin/              # Other build binaries
+target/
+build/
+out/
+bin/
 
 # --------------------------------------
 # Package & archive files
 # --------------------------------------
-*.class           # Java bytecode
-*.jar             # Java archives
-*.war             # Web archives
-*.ear             # Enterprise archives
-*.zip             # Distribution packages
-*.tar.gz          # Compressed archives
-*.rar             # Compressed archives
+*.class
+*.jar
+*.war
+*.ear
 
 # --------------------------------------
 # Logs & diagnostic dumps
 # --------------------------------------
-*.log             # Application logs
-*.log.*           # Rotated logs (e.g., .log.1)
-hs_err_pid*.log   # JVM crash dumps
+*.log
+*.log.*
+hs_err_pid*.log
 
 # --------------------------------------
 # Test reports & coverage
 # --------------------------------------
-/surefire-reports/    # Maven Surefire
-/failsafe-reports/    # Maven Failsafe
-/test-output/         # Generic test outputs
-/jacoco/              # JaCoCo code coverage
+/surefire-reports/
+/failsafe-reports/
+/test-output/
+/jacoco/
 
 # --------------------------------------
 # Environment files
 # --------------------------------------
-.env                # Environment variables file
-.env.*              # Other env variants
+.env
+.env.*
 
 # --------------------------------------
 # Docker-related
 # --------------------------------------
-docker-compose.override.yml   # Local override file
-*.local.yml                   # Alternate compose files
-/.docker/                     # Local Docker build/secret files
-docker-compose*.yml           # Any other compose files
+docker-compose.override.yml
 
 # --------------------------------------
 # IDE & editor metadata
@@ -52,10 +46,6 @@ docker-compose*.yml           # Any other compose files
 # IntelliJ IDEA
 .idea/
 *.iml
-
-# --------------------------------------
-# Any other IDE metadata you don’t want in GitHub
-# --------------------------------------
 bancocentral.iml
 
 # Eclipse
@@ -69,27 +59,25 @@ bancocentral.iml
 
 # VS Code
 .vscode/
-/.vscode/*                    # Uncomment to track specific workspace settings
 
 # --------------------------------------
 # OS-specific files
 # --------------------------------------
-.DS_Store         # macOS metadata
-Thumbs.db         # Windows Explorer thumbnails
-Desktop.ini       # Windows folder settings
-*.bak             # Backup files
-*.tmp             # Temp files
-*~                # Editor backup files
-*.swp             # Vim swap files
-*.swo             # Vim swap files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.bak
+*.tmp
+*~
+*.swp
+*.swo
 
 # --------------------------------------
-# Maven & Gradle wrapper
+# Maven wrapper binary
 # --------------------------------------
-.mvn/wrapper/maven-wrapper.jar   # Maven Wrapper binary
-!gradle-wrapper.jar              # Keep Gradle Wrapper jar tracked
+.mvn/wrapper/maven-wrapper.jar
 
 # --------------------------------------
-# Local Maven repository (uncomment if accidentally checked in)
+# Local Maven repository
 # --------------------------------------
 /root/.m2/
